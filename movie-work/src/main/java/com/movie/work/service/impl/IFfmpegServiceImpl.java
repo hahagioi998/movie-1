@@ -3,6 +3,7 @@ package com.movie.work.service.impl;
 import com.movie.common.config.ProjectConfig;
 import com.movie.common.constant.MovieConstant;
 import com.movie.common.utils.file.FileUploadUtils;
+import com.movie.common.utils.movie.CmdUtil;
 import com.movie.work.service.IFfmpegService;
 import org.springframework.stereotype.Service;
 
@@ -53,8 +54,9 @@ public class IFfmpegServiceImpl implements IFfmpegService {
         System.out.println(command.toString());
         String[] commands = {"sh", "-c", command.toString() + "&"};
         // 执行文件处理
-        Process process = Runtime.getRuntime().exec(commands);
-        process.waitFor();
+        CmdUtil.execCmd(commands.toString());
+//        Process process = Runtime.getRuntime().exec(commands);
+//        process.waitFor();
         return absPath;
     }
 
