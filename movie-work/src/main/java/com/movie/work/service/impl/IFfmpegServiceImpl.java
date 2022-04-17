@@ -55,6 +55,7 @@ public class IFfmpegServiceImpl implements IFfmpegService {
         String[] commands = {"sh", "-c", command.toString() + "&"};
         // 执行文件处理
         CmdUtil.execCmd(commands.toString());
+        
 //        Process process = Runtime.getRuntime().exec(commands);
 //        process.waitFor();
         return absPath;
