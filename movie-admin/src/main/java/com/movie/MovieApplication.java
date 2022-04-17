@@ -15,6 +15,7 @@ public class MovieApplication
     public static void main(String[] args)
     {
         // System.setProperty("spring.devtools.restart.enabled", "false");
+
         SpringApplication.run(MovieApplication.class, args);
         System.out.println("(♥◠‿◠)ﾉﾞ  Movie启动成功   ლ(´ڡ`ლ)ﾞ  \n" +
                 "                      _      \n" +
