@@ -7,7 +7,10 @@ import com.movie.common.utils.movie.CmdUtil;
 import com.movie.work.service.IFfmpegService;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.function.Consumer;
 
 /**
  * 视频处理类
@@ -18,27 +21,30 @@ public class IFfmpegServiceImpl implements IFfmpegService {
     /**
      * 将视频截取成三段
      *
-     * @param absPath      输入文件路径
-     * @param fileName     文件名
+     * @param absPath  输入文件路径
+     * @param fileName 文件名
      */
     @Override
     public String dealThreePrint(String absPath, String fileName) throws IOException, InterruptedException {
         // 黑底文件的绝对路径
         String absBlackPath = FileUploadUtils.getAbsoluteFile(ProjectConfig.getUploadPath(), "source/black.jpg").getAbsolutePath();
-        String command = String.format(MovieConstant.FILM_IMAGE_BLACK, absBlackPath, absPath, absBlackPath, absPath);
+        // 输出文件的绝对路径
+        String absOutPath = FileUploadUtils.getAbsoluteFile(ProjectConfig.getUploadPath() + "/threePrint", fileName).getAbsolutePath();
+        // 组装命令
+        String command = String.format(MovieConstant.FILM_IMAGE_BLACK, absBlackPath, absPath, absBlackPath, absOutPath);
         System.out.println(command);
         String[] commands = {"sh", "-c", command.toString() + "&"};
         // 执行文件处理
         Process process = Runtime.getRuntime().exec(commands);
         process.waitFor();
-        return absPath;
+        return absOutPath;
     }
 
     /**
      * 上下添加文字
      *
-     * @param absPath      输入文件路径
-     * @param fileName     文件名
+     * @param absPath  输入文件路径
+     * @param fileName 文件名
      */
     @Override
     public String addDub(String absPath, String fileName) throws IOException, InterruptedException {
@@ -54,18 +60,83 @@ public class IFfmpegServiceImpl implements IFfmpegService {
         System.out.println(command.toString());
         String[] commands = {"sh", "-c", command.toString() + "&"};
         // 执行文件处理
-        CmdUtil.execCmd(commands.toString());
-        
-//        Process process = Runtime.getRuntime().exec(commands);
-//        process.waitFor();
+
+        process(commands, i -> {
+            System.out.println(i);
+
+        });
+
         return absPath;
     }
+
+    public void process(String[] commands, Consumer<Integer> consumer) throws IOException, InterruptedException {
+        Process process = null;
+
+        process = Runtime.getRuntime().exec(commands);
+       // int i = process.waitFor();
+        dealStream( process);
+
+        consumer.accept(10);
+    }
+
+
+    /**
+     * 处理process输出流和错误流，防止进程阻塞
+     * 在process.waitFor();前调用
+     * @param process
+     */
+    private static void dealStream(Process process) {
+        if (process == null) {
+            return;
+        }
+        // 处理InputStream的线程
+        new Thread() {
+            @Override
+            public void run() {
+                BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line = null;
+                try {
+                    while ((line = in.readLine()) != null) {
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        in.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
+        // 处理ErrorStream的线程
+        new Thread() {
+            @Override
+            public void run() {
+                BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                String line = null;
+                try {
+                    while ((line = err.readLine()) != null) {
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        err.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
+    }
+
 
     /**
      * 添加西瓜视频
      *
-     * @param absPath      输入文件路径
-     * @param fileName     文件名
+     * @param absPath  输入文件路径
+     * @param fileName 文件名
      */
     @Override
     public String addWaterMelon(String absPath, String fileName) throws IOException, InterruptedException {
